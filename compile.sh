@@ -28,7 +28,7 @@ echo "                                  .-+%%%%%%#***=-.                        
 echo ""
 echo "Compiling OpenX32 Operating System for the Behringer X32 Audio-Mixing Console"
 export PATH=/opt/cross/bin:$PATH
-export COPTS="-mcpu=arm926ej-s -Os -fno-caller-saves -pipe -funit-at-a-time -msoft-float -fno-plt -fno-unwind-tables -fno-asynchronous-unwind-tables"
+export COPTS="-mcpu=arm926ej-s -Os -fno-caller-saves -pipe -funit-at-a-time -msoft-float -fno-plt -fno-unwind-tables -fno-asynchronous-unwind-tables -Wl,-z,max-page-size=4096"
 
 cleanup() {
     tput csr 0 $(($(tput lines) - 1)) # reset scroll-region
@@ -149,7 +149,7 @@ fi
 
 if [ "$COMPILE_SOFTWARE" = true ]; then
 	cd software
-
+	mkdir -p bin
 	update_progress 60 "Compile x32sdconfig..."
 	cd x32sdconfig
 	./compile.sh
@@ -225,6 +225,7 @@ export JEMALLOC_FLAGS="--with-lg-hugepage=21 --with-lg-page=12"
 cd jemalloc && ./autogen.sh && cd ..
 cd jemalloc && ./configure --prefix=/usr --libdir=/usr/lib --host=arm-linux-gnueabi --disable-debug --disable-stats --disable-fill --disable-cxx --enable-xmalloc $JEMALLOC_FLAGS CC="/opt/cross/bin/arm-linux-gnueabi-gcc" CFLAGS="$COPTS -D_GNU_SOURCE" && cd ..
 make -j$(nproc) -C jemalloc 
+make -C tools
 
 # copy tools to initramFS
 mkdir -p initramfs_root/openx32
@@ -251,12 +252,14 @@ cp $(arm-linux-gnueabi-gcc -print-file-name=libgcc_s.so.1) initramfs_root/lib/li
 
 cd initramfs_root/lib/ && ln -sf libc.so ld-musl-arm.so.1 && cd ../../
 
-make -C tools
 
 ./tools/sstrip/sstrip initramfs_root/lib/*
 ./tools/sstrip/sstrip initramfs_root/openx32/*
 ./tools/sstrip/sstrip initramfs_root/bin/*
 ./tools/sstrip/sstrip initramfs_root/sbin/*
+
+make -C squashfs-tools-ddwrt
+
 
 update_progress 80 "Create initramFS..."
 cd initramfs_root
