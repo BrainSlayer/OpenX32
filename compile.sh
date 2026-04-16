@@ -27,7 +27,7 @@ echo "                             .#@@%%*-.    .:=+**##***+.                   
 echo "                                  .-+%%%%%%#***=-.                                               "
 echo ""
 echo "Compiling OpenX32 Operating System for the Behringer X32 Audio-Mixing Console"
-
+export PATH=/opt/cross/bin:$PATH
 cleanup() {
     tput csr 0 $(($(tput lines) - 1)) # reset scroll-region
     tput rc                          # restore cursor
@@ -233,8 +233,9 @@ cp bins/* initramfs_root/openx32
 # for musl
 cp $(arm-linux-gnueabi-gcc -print-file-name=libc.so) initramfs_root/lib/libc.so 
 cp $(arm-linux-gnueabi-gcc -print-file-name=libstdc++.so.6) initramfs_root/lib/libstdc++.so.6
-cd initramfs_root/lib/ && ln -sf libc.so ld-musl-arm.so.1 && cd ../../
+cp $(arm-linux-gnueabi-gcc -print-file-name=libgcc_s.so.1) initramfs_root/lib/libgcc_s.so.1
 
+cd initramfs_root/lib/ && ln -sf libc.so ld-musl-arm.so.1 && cd ../../
 
 arm-linux-gnueabi-strip initramfs_root/lib/*
 arm-linux-gnueabi-strip initramfs_root/openx32/*
