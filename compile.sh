@@ -247,10 +247,12 @@ cp $(arm-linux-gnueabi-gcc -print-file-name=libgcc_s.so.1) initramfs_root/lib/li
 
 cd initramfs_root/lib/ && ln -sf libc.so ld-musl-arm.so.1 && cd ../../
 
-arm-linux-gnueabi-strip initramfs_root/lib/*
-arm-linux-gnueabi-strip initramfs_root/openx32/*
-arm-linux-gnueabi-strip initramfs_root/bin/*
-arm-linux-gnueabi-strip initramfs_root/sbin/*
+make -C tools
+
+./tools/sstrip/sstrip initramfs_root/lib/*
+./tools/sstrip/sstrip initramfs_root/openx32/*
+./tools/sstrip/sstrip initramfs_root/bin/*
+./tools/sstrip/sstrip initramfs_root/sbin/*
 
 update_progress 80 "Create initramFS..."
 cd initramfs_root
