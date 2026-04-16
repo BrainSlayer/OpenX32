@@ -259,6 +259,7 @@ cd initramfs_root/lib/ && ln -sf libc.so ld-musl-arm.so.1 && cd ../../
 ./tools/sstrip/sstrip initramfs_root/sbin/*
 
 make -C squashfs-tools-ddwrt
+./squashfs-tools-ddwrt/mksquashfs initramfs_root /tmp/openx32.squashfs -comp xz -nopad  -root-owned -noappend -Xbcj arm -b 262144
 
 
 update_progress 80 "Create initramFS..."
@@ -318,7 +319,9 @@ perl software/dcpapp/dcp_compiler.pl /tmp/openx32.bin:binary/dcpapp.bin /tmp/dcp
 #mkdir -p /tmp/openx32/binary
 #cp /tmp/openx32.bin /tmp/openx32/binary/dcpapp.bin
 #./dcp-tool -c /tmp/dcp_corefs_openx32-alpha4.run "OpenX32 Alpha 4 - https://github.com/OpenMixerProject" /tmp/openx32/
-
+./image-tools/gen_image.sh usbimage.img 32 /tmp/dcp_corefs_openx32.run 32 /tmp/openx32.squashfs 32
+#./image-tools/fat-fstool -i image-tools/fat.img mkfs
+#./image-tools/fat-fstool -i image-tools/fat.img cp /tmp/dcp_corefs_openx32.run /
 
 update_progress 100 "Done."
 echo "  ____                  __   ______ ____"
