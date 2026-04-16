@@ -122,17 +122,6 @@ if [ "$COMPILE_UBOOT" = true ]; then
 	ARCH=arm CROSS_COMPILE=/opt/cross/bin/arm-linux-gnueabi- make -j$(nproc)
 fi
 
-# =================== Linux =======================
-
-if [ "$COMPILE_LINUX" = true ]; then
-	update_progress 25 "Compile Linux..."
-	cd ../linux
-	ARCH=arm CROSS_COMPILE=/opt/cross/bin/arm-linux-gnueabi- make -j$(nproc) zImage
-	ARCH=arm CROSS_COMPILE=/opt/cross/bin/arm-linux-gnueabi- make -j$(nproc) dtbs
-	update_progress 50 "Create U-Boot-image..."
-	mkimage -A ARM -O linux -T kernel -C none -a 0x80060000 -e 0x80060000 -n "Linux kernel (OpenX32)" -d arch/arm/boot/zImage /tmp/uImage
-fi
-
 # =================== Busybox =======================
 
 if [ "$COMPILE_BUSYBOX" = true ]; then
@@ -252,16 +241,28 @@ arm-linux-gnueabi-strip initramfs_root/openx32/*
 arm-linux-gnueabi-strip initramfs_root/bin/*
 arm-linux-gnueabi-strip initramfs_root/sbin/*
 
-# =================== Create InitramFS =======================
-
 update_progress 80 "Create initramFS..."
 cd initramfs_root
 mkdir -p dev proc sys etc mnt home usr
-rm /tmp/initramfs.cpio.lzma
-rm /tmp/uramdisk.bin
-find . -print0 | cpio --null -ov --format=newc > /tmp/initramfs.cpio
-lzma -9 -z /tmp/initramfs.cpio
-mkimage -A ARM -O linux -T ramdisk -C lzma -a 0 -e 0 -n "Ramdisk Image" -d /tmp/initramfs.cpio.lzma /tmp/uramdisk.bin
+
+# =================== Linux =======================
+
+if [ "$COMPILE_LINUX" = true ]; then
+	update_progress 25 "Compile Linux..."
+	cd ../linux
+	ARCH=arm CROSS_COMPILE=/opt/cross/bin/arm-linux-gnueabi- make -j$(nproc) zImage
+	ARCH=arm CROSS_COMPILE=/opt/cross/bin/arm-linux-gnueabi- make -j$(nproc) dtbs
+	update_progress 50 "Create U-Boot-image..."
+	mkimage -A ARM -O linux -T kernel -C none -a 0x80060000 -e 0x80060000 -n "Linux kernel (OpenX32)" -d arch/arm/boot/zImage /tmp/uImage
+fi
+
+# =================== Create InitramFS =======================
+
+#rm /tmp/initramfs.cpio.lzma
+#rm /tmp/uramdisk.bin
+#find . -print0 | cpio --null -ov --format=newc > /tmp/initramfs.cpio
+#lzma -9 -z /tmp/initramfs.cpio
+#mkimage -A ARM -O linux -T ramdisk -C lzma -a 0 -e 0 -n "Ramdisk Image" -d /tmp/initramfs.cpio.lzma /tmp/uramdisk.bin
 cd ..
 
 # =================== Binary-Blob =======================
@@ -278,10 +279,11 @@ update_progress 87 "Merge binary-files...Linux-Kernel -> openx32.bin"
 dd if=/tmp/uImage of=/tmp/openx32.bin bs=512 seek=$((0x300)) conv=notrunc
 # DeviceTreeBlob at offset 0x600000 (~6 MiB for Kernel)
 update_progress 88 "Merge binary-files...DeviceTreeBlob -> openx32.bin"
-dd if=linux/arch/arm/boot/dts/nxp/imx/imx25-pdk.dtb of=/tmp/openx32.bin bs=512 seek=$((0x3000)) conv=notrunc
+cat linux/arch/arm/boot/dts/nxp/imx/imx25-pdk.dtb >> /tmp/openx32.bin
+#dd if=linux/arch/arm/boot/dts/nxp/imx/imx25-pdk.dtb of=/tmp/openx32.bin bs=512 seek=$((0x3000)) conv=notrunc
 # InitramFS at offset 0x810000 (~64kiB for DeviceTreeBlob)
-update_progress 89 "Merge binary-files...InitramFS -> openx32.bin"
-dd if=/tmp/uramdisk.bin of=/tmp/openx32.bin bs=512 seek=$((0x3080)) conv=notrunc
+#update_progress 89 "Merge binary-files...InitramFS -> openx32.bin"
+#dd if=/tmp/uramdisk.bin of=/tmp/openx32.bin bs=512 seek=$((0x3080)) conv=notrunc
 update_progress 90 "Merge binary-files...Finalize openx32.bin"
 dd if=/dev/zero of=/tmp/openx32.bin bs=1 count=100 oflag=append conv=notrunc
 
