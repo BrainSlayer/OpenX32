@@ -28,6 +28,8 @@ echo "                                  .-+%%%%%%#***=-.                        
 echo ""
 echo "Compiling OpenX32 Operating System for the Behringer X32 Audio-Mixing Console"
 export PATH=/opt/cross/bin:$PATH
+export COPTS="-mcpu=arm926ej-s -Os -fno-caller-saves -pipe -funit-at-a-time -msoft-float -fno-plt -fno-unwind-tables -fno-asynchronous-unwind-tables"
+
 cleanup() {
     tput csr 0 $(($(tput lines) - 1)) # reset scroll-region
     tput rc                          # restore cursor
@@ -128,7 +130,7 @@ if [ "$COMPILE_BUSYBOX" = true ]; then
 	update_progress 55 "Compile busybox..."
 	cd ../busybox
 	ARCH=arm CROSS_COMPILE=/opt/cross/bin/arm-linux-gnueabi- make -j$(nproc) \
-		CFLAGS="-flto -fwhole-program -flto-partition=none -fno-caller-saves -fno-plt" \
+		CFLAGS="-flto -fwhole-program -flto-partition=none $COPTS" \
 		AR=arm-linux-gnueabi-gcc-ar \
 		RANLIB=arm-linux-gnueabi-gcc-ranlib
 
@@ -170,7 +172,7 @@ if [ "$COMPILE_SOFTWARE" = true ]; then
 		--host=arm-linux-gnueabi \
 		--disable-zlib \
 		--disable-syslog \
-		CFLAGS="-Os -g0 -flto -fwhole-program -flto-partition=none -fno-caller-saves -fno-plt" \
+		CFLAGS="-g0 -flto -fwhole-program -flto-partition=none $COPTS" \
 		AR=arm-linux-gnueabi-gcc-ar \
 		RANLIB=arm-linux-gnueabi-gcc-ranlib
 
@@ -188,7 +190,7 @@ if [ "$COMPILE_SOFTWARE" = true ]; then
         -DBUILD_SHARED_LIBS=OFF \
 	    -DZLIB_INCLUDE_DIR=/dummy/usr/include/ \
 	    -DZLIB_LIBRARY=/usr/lib/arm-linux-gnueabi/libz.a \
-        -DCMAKE_C_FLAGS="-s -mcpu=arm926ej-s -Os -fno-caller-saves -fno-plt -D_GNU_SOURCE" \
+        -DCMAKE_C_FLAGS="-s $COPTS -D_GNU_SOURCE" \
 	    -DCMAKE_EXE_LINKER_FLAGS="-L/usr/lib/arm-linux-gnueabi"
 	cmake --build .
 	make -j$(nproc) install
@@ -203,7 +205,7 @@ if [ "$COMPILE_SOFTWARE" = true ]; then
 	    -DCMAKE_TOOLCHAIN_FILE=../../files/framebuffer-vncserver.cmake \
 	    -DCMAKE_INSTALL_PREFIX={$VNC_LIB_ROOT} \
 	    -DCMAKE_BUILD_TYPE=Release \
-	    -DCMAKE_C_FLAGS="-mcpu=arm926ej-s  -Os -I${VNC_LIB_ROOT}/include -fno-caller-saves -fno-plt" \
+	    -DCMAKE_C_FLAGS="$COPTS -I${VNC_LIB_ROOT}/include" \
 	    -DCMAKE_PREFIX_PATH="${VNC_LIB_ROOT}" \
 	    -DCMAKE_FIND_ROOT_PATH="${VNC_LIB_ROOT}" \
 	    -DCMAKE_EXE_LINKER_FLAGS="-L${VNC_LIB_ROOT}/lib -L${ZLIB_LIB_PATH} -lvncserver -lpthread -ldl"
@@ -213,9 +215,15 @@ if [ "$COMPILE_SOFTWARE" = true ]; then
 	cd ..
 fi
 
+export JEMALLOC_FLAGS="--with-lg-hugepage=21 --with-lg-page=12"
+cd jemalloc && ./autogen.sh && cd ..
+cd jemalloc && ./configure --prefix=/usr --libdir=/usr/lib --host=arm-linux-gnueabi --disable-debug --disable-stats --disable-fill --disable-cxx --enable-xmalloc $JEMALLOC_FLAGS CC="/opt/cross/bin/arm-linux-gnueabi-gcc" CFLAGS="$COPTS -D_GNU_SOURCE" && cd ..
+make -j$(nproc) -C jemalloc 
+
 # copy tools to initramFS
 mkdir -p initramfs_root/openx32
 mkdir -p initramfs_root/lib
+cp jemalloc/lib/libjemalloc.so.2 initramfs_root/lib
 cp software/bin/x32sdconfig initramfs_root/openx32/
 cp software/bin/x32ctrl initramfs_root/openx32/
 cp software/dropbear/dropbearmulti initramfs_root/openx32/

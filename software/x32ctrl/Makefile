@@ -20,7 +20,7 @@ WARNINGS        := -Wall -Wshadow -Wundef -Wextra -Wno-unused-function -Wno-erro
 DEPFLAGS        = -MMD -MP
 
 # normal build
-CFLAGS          ?= -std=c++23 -mcpu=arm926ej-s -Os -flto -fwhole-program -flto-partition=none -fno-caller-saves -fno-plt -g0 -D_GNU_SOURCE -I$(LVGL_DIR)/ $(WARNINGS) $(DEPFLAGS)
+CFLAGS          ?= -std=c++23 -mcpu=arm926ej-s -flto -fwhole-program $(COPTS) -g0 -D_GNU_SOURCE -I$(LVGL_DIR)/ $(WARNINGS) $(DEPFLAGS)
 
 # debug build
 #CFLAGS          ?= -std=c++23 -g -I$(LVGL_DIR)/ $(WARNINGS) $(DEPFLAGS)
