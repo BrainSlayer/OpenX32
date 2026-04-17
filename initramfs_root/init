@@ -19,6 +19,9 @@ mkdir -p /dev/pts
 mkdir /tmp/var
 mkdir -p /tmp/mnt/usb
 
+echo >/proc/sys/kernel/hotplug
+
+/etc/hotplug2.startup
 
 # some startup-things
 # =============================

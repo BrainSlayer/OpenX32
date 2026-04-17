@@ -220,6 +220,14 @@ if [ "$COMPILE_SOFTWARE" = true ]; then
 	
 	cd ..
 fi
+make -C software/hotplug2 COPTS="$COPTS -flto -fwhole-program -flto-partition=none" CC="arm-linux-gnueabi-gcc"
+install -D software/hotplug2/hotplug2 initramfs_root/sbin/hotplug2
+mkdir -p software/etc/
+cp -av software/hotplug2/config/etc/* initramfs_root/etc/
+make  -C software/udev udevtrigger CFLAGS="$COPTS -flto -fwhole-program -flto-partition=none" CC="arm-linux-gnueabi-gcc"
+install -D software/udev/udevtrigger initramfs_root/sbin/udevtrigger
+
+
 
 export JEMALLOC_FLAGS="--with-lg-hugepage=21 --with-lg-page=12"
 cd jemalloc && ./autogen.sh && cd ..
@@ -260,6 +268,8 @@ cd initramfs_root/lib/ && ln -sf libc.so ld-musl-arm.so.1 && cd ../../
 ./tools/sstrip/sstrip initramfs_root/bin/*
 ./tools/sstrip/sstrip initramfs_root/sbin/*
 ./upx-5.1.1-amd64_linux/upx -9 initramfs_root/openx32/*
+./upx-5.1.1-amd64_linux/upx -9 initramfs_root/sbin/hotplug2
+./upx-5.1.1-amd64_linux/upx -9 initramfs_root/sbin/udevtrigger
 ./upx-5.1.1-amd64_linux/upx -9 initramfs_root/bin/busybox
 ./upx-5.1.1-amd64_linux/upx -9 initramfs_root/lib/libstdc++.so.6
 ./upx-5.1.1-amd64_linux/upx -9 initramfs_root/lib/libjemalloc.so.2
