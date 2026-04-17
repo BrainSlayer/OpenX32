@@ -28,7 +28,8 @@ echo "                                  .-+%%%%%%#***=-.                        
 echo ""
 echo "Compiling OpenX32 Operating System for the Behringer X32 Audio-Mixing Console"
 export PATH=/opt/cross/bin:$PATH
-export COPTS="-mcpu=arm926ej-s -ffast-math -funsafe-math-optimizations -ftree-vectorize -ftree-vectorizer-verbose=2 -fopt-info-vec -Os -fno-caller-saves -pipe -funit-at-a-time -msoft-float -fno-plt -fno-unwind-tables -fno-asynchronous-unwind-tables -Wl,-z,max-page-size=4096"
+export VECTORIZE="-ffast-math -funsafe-math-optimizations -ftree-vectorize -ftree-vectorizer-verbose=2 -fopt-info-vec"
+export COPTS="-mcpu=arm926ej-s  -Os -fno-caller-saves -pipe -funit-at-a-time -msoft-float -fno-plt -fno-unwind-tables -fno-asynchronous-unwind-tables -Wl,-z,max-page-size=4096"
 export TOP=$(pwd)
 
 cleanup() {
@@ -158,7 +159,7 @@ if [ "$COMPILE_SOFTWARE" = true ]; then
 
 	update_progress 65 "Compile x32ctrl..."
 	cd x32ctrl
-	make -j$(nproc)
+	make -j$(nproc) COPTS="$COPTS $VECTORIZE"
 	cd ..
 
 	update_progress 70 "Compile dropbear..."
@@ -223,7 +224,7 @@ if [ "$COMPILE_SOFTWARE" = true ]; then
 fi
 make -C software/hotplug2 COPTS="$COPTS -flto -fwhole-program -flto-partition=none" CC="arm-linux-gnueabi-gcc"
 install -D software/hotplug2/hotplug2 initramfs_root/sbin/hotplug2
-mkdir -p software/etc/
+mkdir -p initramfs_root/etc/
 cp -av software/hotplug2/config/etc/* initramfs_root/etc/
 make  -C software/udev udevtrigger CFLAGS="$COPTS -flto -fwhole-program -flto-partition=none" CC="arm-linux-gnueabi-gcc"
 install -D software/udev/udevtrigger initramfs_root/sbin/udevtrigger
@@ -280,8 +281,8 @@ cd initramfs_root/lib/ && ln -sf libc.so ld-musl-arm.so.1 && cd ../../
 ./upx-5.1.1-amd64_linux/upx -9 --ultra-brute initramfs_root/lib/libstdc++.so.6
 ./upx-5.1.1-amd64_linux/upx -9 --ultra-brute initramfs_root/lib/libjemalloc.so.2
 
-make -C squashfs-tools-ddwrt
-./squashfs-tools-ddwrt/mksquashfs initramfs_root /tmp/openx32.squashfs -comp xz -nopad  -root-owned -noappend -Xbcj arm -b 262144
+#make -C squashfs-tools-ddwrt
+#./squashfs-tools-ddwrt/mksquashfs initramfs_root /tmp/openx32.squashfs -comp xz -nopad  -root-owned -noappend -Xbcj arm -b 262144
 
 
 update_progress 80 "Create initramFS..."
@@ -342,7 +343,7 @@ perl software/dcpapp/dcp_compiler.pl /tmp/openx32.bin:binary/dcpapp.bin /tmp/dcp
 #mkdir -p /tmp/openx32/binary
 #cp /tmp/openx32.bin /tmp/openx32/binary/dcpapp.bin
 #./dcp-tool -c /tmp/dcp_corefs_openx32-alpha4.run "OpenX32 Alpha 4 - https://github.com/OpenMixerProject" /tmp/openx32/
-./image-tools/gen_image.sh usbimage.img 32 /tmp/dcp_corefs_openx32.run 32 /tmp/openx32.squashfs 32
+#./image-tools/gen_image.sh usbimage.img 32 /tmp/dcp_corefs_openx32.run 32 /tmp/openx32.squashfs 32
 #./image-tools/fat-fstool -i image-tools/fat.img mkfs
 #./image-tools/fat-fstool -i image-tools/fat.img cp /tmp/dcp_corefs_openx32.run /
 

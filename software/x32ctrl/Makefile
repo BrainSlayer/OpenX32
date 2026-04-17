@@ -68,7 +68,7 @@ DEPS            = $(TARGET:.o=.d)
 $(BUILD_OBJ_DIR)/%.o: %.c lv_conf.h
 	@mkdir -p $(dir $@)
 	@$(CC)  $(CFLAGS) -c $< -o $@
-	@echo "CC  $<"
+	@echo "CC $(CFLAGS)  $<"
 
 $(BUILD_OBJ_DIR)/%.o: %.cpp lv_conf.h
 	@mkdir -p $(dir $@)
