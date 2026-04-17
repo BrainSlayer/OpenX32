@@ -4,11 +4,20 @@ export LD_PRELOAD=/lib/libjemalloc.so.2
 # =============================
 /bin/mount -t proc none /proc
 /bin/mount -t sysfs none /sys
+/bin/mount -t debugfs none /sys/kernel/debug
 /bin/mount -t devtmpfs none /dev
+/bin/mount -t ramfs none /tmp
+mknod -m 0664 /dev/console c 5 1
+mknod -m 0664 /dev/null c 1 3
+mknod -m 0664 /dev/watchdog c 10 130
 
 # prepare support for virtual filesystem for OpenSSH
 mkdir -p /dev/pts
 /bin/mount -t devpts devpts /dev/pts
+/bin/mount -t usbfs none /proc/bus/usb
+
+mkdir /tmp/var
+mkdir -p /tmp/mnt/usb
 
 
 # some startup-things

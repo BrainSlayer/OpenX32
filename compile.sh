@@ -270,8 +270,9 @@ make -C squashfs-tools-ddwrt
 
 update_progress 80 "Create initramFS..."
 cd initramfs_root
-mkdir -p dev proc sys etc mnt home usr
-
+mkdir -p dev proc sys etc home usr
+ln -sf tmp/mnt mnt
+ln -sf tmp/var var
 # =================== Linux =======================
 
 if [ "$COMPILE_LINUX" = true ]; then
