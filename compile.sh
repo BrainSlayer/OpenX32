@@ -249,7 +249,6 @@ cp bins/* initramfs_root/openx32
 cp $(arm-linux-gnueabi-gcc -print-file-name=libc.so) initramfs_root/lib/libc.so 
 cp $(arm-linux-gnueabi-gcc -print-file-name=libstdc++.so.6) initramfs_root/lib/libstdc++.so.6
 cp $(arm-linux-gnueabi-gcc -print-file-name=libgcc_s.so.1) initramfs_root/lib/libgcc_s.so.1
-
 cd initramfs_root/lib/ && ln -sf libc.so ld-musl-arm.so.1 && cd ../../
 
 
@@ -257,6 +256,10 @@ cd initramfs_root/lib/ && ln -sf libc.so ld-musl-arm.so.1 && cd ../../
 ./tools/sstrip/sstrip initramfs_root/openx32/*
 ./tools/sstrip/sstrip initramfs_root/bin/*
 ./tools/sstrip/sstrip initramfs_root/sbin/*
+./upx-5.1.1-amd64_linux/upx -9 initramfs_root/openx32/*
+./upx-5.1.1-amd64_linux/upx -9 initramfs_root/bin/busybox
+./upx-5.1.1-amd64_linux/upx -9 initramfs_root/lib/libstdc++.so.6
+./upx-5.1.1-amd64_linux/upx -9 initramfs_root/lib/libjemalloc.so.2
 
 make -C squashfs-tools-ddwrt
 ./squashfs-tools-ddwrt/mksquashfs initramfs_root /tmp/openx32.squashfs -comp xz -nopad  -root-owned -noappend -Xbcj arm -b 262144
