@@ -28,7 +28,8 @@ echo "                                  .-+%%%%%%#***=-.                        
 echo ""
 echo "Compiling OpenX32 Operating System for the Behringer X32 Audio-Mixing Console"
 export PATH=/opt/cross/bin:$PATH
-export COPTS="-mcpu=arm926ej-s -Os -fno-caller-saves -pipe -funit-at-a-time -msoft-float -fno-plt -fno-unwind-tables -fno-asynchronous-unwind-tables -Wl,-z,max-page-size=4096"
+export COPTS="-mcpu=arm926ej-s -ffast-math -funsafe-math-optimizations -ftree-vectorize -ftree-vectorizer-verbose=2 -fopt-info-vec -Os -fno-caller-saves -pipe -funit-at-a-time -msoft-float -fno-plt -fno-unwind-tables -fno-asynchronous-unwind-tables -Wl,-z,max-page-size=4096"
+export TOP=$(pwd)
 
 cleanup() {
     tput csr 0 $(($(tput lines) - 1)) # reset scroll-region
@@ -227,7 +228,12 @@ cp -av software/hotplug2/config/etc/* initramfs_root/etc/
 make  -C software/udev udevtrigger CFLAGS="$COPTS -flto -fwhole-program -flto-partition=none" CC="arm-linux-gnueabi-gcc"
 install -D software/udev/udevtrigger initramfs_root/sbin/udevtrigger
 
+mkdir -p kernel_headers
+make -C linux headers_install ARCH=arm INSTALL_HDR_PATH=$TOP/kernel_headers
 
+cd software/musl && ./configure --host=arm-linux CFLAGS="$COPTS -DCRYPT_SIZE_HACK -I$TOP/kernel_headers/include" --enable-optimize=size --disable-gcc-wrapper
+cd ../../
+make -C software/musl
 
 export JEMALLOC_FLAGS="--with-lg-hugepage=21 --with-lg-page=12"
 cd jemalloc && ./autogen.sh && cd ..
@@ -257,7 +263,7 @@ cp bins/* initramfs_root/openx32
 #cp $(arm-linux-gnueabi-gcc -print-file-name=libm.so.6) initramfs_root/lib/libm.so.6
 #cp $(arm-linux-gnueabi-gcc -print-file-name=libresolv.so.2) initramfs_root/lib/libresolv.so.2
 # for musl
-cp $(arm-linux-gnueabi-gcc -print-file-name=libc.so) initramfs_root/lib/libc.so 
+cp software/musl/lib/libc.so initramfs_root/lib/libc.so 
 cp $(arm-linux-gnueabi-gcc -print-file-name=libstdc++.so.6) initramfs_root/lib/libstdc++.so.6
 cp $(arm-linux-gnueabi-gcc -print-file-name=libgcc_s.so.1) initramfs_root/lib/libgcc_s.so.1
 cd initramfs_root/lib/ && ln -sf libc.so ld-musl-arm.so.1 && cd ../../
