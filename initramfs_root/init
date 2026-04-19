@@ -1,5 +1,7 @@
 #!/bin/sh
 export LD_PRELOAD=/lib/libjemalloc.so.2
+export LD_LIBRARY_PATH=/usr/lib:/lib
+
 # mount system-folders
 # =============================
 /bin/mount -t proc none /proc
@@ -10,6 +12,15 @@ export LD_PRELOAD=/lib/libjemalloc.so.2
 mknod -m 0664 /dev/console c 5 1
 mknod -m 0664 /dev/null c 1 3
 mknod -m 0664 /dev/watchdog c 10 130
+mknod -m 0664 /dev/loop-control c 10 237
+mknod -m 0664 /dev/loop0 b 7 0
+mknod -m 0664 /dev/loop1 b 7 1
+mknod -m 0664 /dev/loop2 b 7 2
+mknod -m 0664 /dev/loop3 b 7 3
+mknod -m 0664 /dev/loop4 b 7 4
+mknod -m 0664 /dev/loop5 b 7 5
+mknod -m 0664 /dev/loop6 b 7 6
+mknod -m 0664 /dev/loop7 b 7 7
 
 # prepare support for virtual filesystem for OpenSSH
 mkdir -p /dev/pts
@@ -18,6 +29,8 @@ mkdir -p /dev/pts
 
 mkdir /tmp/var
 mkdir -p /tmp/mnt/usb
+
+/bin/mount -t squashfs /usr.squashfs usr
 
 echo >/proc/sys/kernel/hotplug
 
@@ -29,7 +42,7 @@ echo >/proc/sys/kernel/hotplug
 hostname -F /etc/hostname
 
 # read mac-address from SD-card and set it
-/openx32/x32sdconfig
+/usr/bin/x32sdconfig
 
 # bring networkdevices up
 ip link set lo up
@@ -43,11 +56,11 @@ echo "Starting shell for ttymxc4..."
 /sbin/getty -L 115200 ttymxc4 &
 
 # start dropbear with auto-key-creation
-/openx32/dropbear -p 22 -R > /dev/null 2>&1 &
+/usr/bin/dropbear -p 22 -R > /dev/null 2>&1 &
 
 while true; do
 	# start OpenX32 Main-Software as Shell
-	/bin/setsid /bin/cttyhack /openx32/x32ctrl --L /openx32/lattice.bit --X /openx32/xilinx.bit --D1 /openx32/dsp1.ldr --D2 /openx32/dsp2.ldr
+	/bin/setsid /bin/cttyhack /usr/bin/x32ctrl --L /usr/bin/lattice.bit --X /usr/bin/xilinx.bit --D1 /usr/bin/dsp1.ldr --D2 /usr/bin/dsp2.ldr
 
 	# start a simple shell for tty0 (Display)
 	echo "Booting into busybox shell..."
