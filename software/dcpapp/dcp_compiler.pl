@@ -80,6 +80,8 @@ for (my $i = 0; $i < $nfiles; $i++) {
   binmode(F);
   my $buf;                    
   my $crs = Digest::MD5->new->add($revstringshrt, $dirfiles[$i], $crseed)->digest;
+#  print "crs " . $crs;
+  print "rev " . $revstringshrt . " dirfiles " . $dirfiles[$i] . " crseed " . $crseed;
   my @key = unpack('LLLL',$crs);
   my $modf = tell(FI) >> 9;
   while(not eof(F)) {
